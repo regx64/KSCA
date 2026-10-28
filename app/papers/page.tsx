@@ -8,8 +8,8 @@ import { PaperCard, type PaperCardData } from '@/components/PaperCard';
 import { EmptyState } from '@/components/EmptyState';
 import { PageHeader } from '@/components/PageHeader';
 import { Pagination } from '@/components/Pagination';
-import { buttonVariants } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Container } from '@/components/Container';
+import { LocalNav } from '@/components/LocalNav';
 import { cn } from '@/lib/utils';
 
 export const metadata: Metadata = { title: '논문 아카이브' };
@@ -49,36 +49,48 @@ export default async function PapersPage({ searchParams }: { searchParams: Promi
   const filtered = Boolean(tag || q);
 
   return (
-    <div>
-      <PageHeader
-        eyebrow="ARCHIVE"
-        title="논문 아카이브"
-        description="전국 청소년의 컴퓨터 사이언스 연구와 프로젝트. 모든 논문은 영구 식별자로 인용할 수 있습니다."
-        actions={
-          <Link href="/papers/upload" className={buttonVariants()}>
-            논문 업로드
-          </Link>
-        }
+    <>
+      <LocalNav
+        title="아카이브"
+        titleHref="/papers"
+        links={[
+          { href: paperListHref({ ...params, sort: 'latest', page: 1 }), label: '최신순', active: sort === 'latest' },
+          { href: paperListHref({ ...params, sort: 'views', page: 1 }), label: '많이 본 논문', active: sort === 'views' },
+        ]}
+        cta={{ href: '/papers/upload', label: '업로드' }}
       />
+      <Container>
+        <PageHeader
+          title="논문 아카이브."
+          description="전국 청소년의 컴퓨터 사이언스 연구. 모든 논문은 영구 식별자로 인용할 수 있습니다."
+        />
 
-      <div className="space-y-4">
-        <form action="/papers" className="flex gap-2" role="search">
+        <form action="/papers" role="search" id="search" className="scroll-mt-32">
           {tag && <input type="hidden" name="tag" value={tag} />}
           {sort !== 'latest' && <input type="hidden" name="sort" value={sort} />}
           <label htmlFor="q" className="sr-only">
             논문 검색
           </label>
-          <div className="relative flex-1">
-            <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
-            <Input id="q" name="q" defaultValue={q ?? ''} placeholder="제목, 저자, 초록으로 검색" className="h-10 bg-card pl-9" />
+          <div className="relative">
+            <Search className="pointer-events-none absolute top-1/2 left-5 size-5 -translate-y-1/2 text-muted-foreground" strokeWidth={1.75} aria-hidden />
+            <input
+              id="q"
+              name="q"
+              defaultValue={q ?? ''}
+              placeholder="제목, 저자, 초록으로 검색"
+              className="h-14 w-full rounded-full bg-surface pr-28 pl-13 text-[17px] outline-none transition placeholder:text-ink-3 focus:bg-white focus:shadow-[0_0_0_1px_var(--hairline),0_0_0_5px_rgba(0,113,227,0.15)]"
+            />
+            <button
+              type="submit"
+              className="absolute top-1/2 right-2 h-10 -translate-y-1/2 rounded-full bg-primary px-5 text-[15px] text-white transition hover:bg-[#0077ed]"
+            >
+              검색
+            </button>
           </div>
-          <button type="submit" className={buttonVariants({ variant: 'outline', size: 'lg', className: 'h-10' })}>
-            검색
-          </button>
         </form>
 
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <nav aria-label="정렬" className="flex rounded-lg border bg-card p-0.5 text-sm">
+        <div className="mt-8 flex flex-wrap items-center justify-between gap-4">
+          <nav aria-label="정렬" className="inline-flex rounded-full bg-surface p-1 text-[14px]">
             {(
               [
                 ['latest', '최신순'],
@@ -90,22 +102,22 @@ export default async function PapersPage({ searchParams }: { searchParams: Promi
                 href={paperListHref({ ...params, sort: value, page: 1 })}
                 aria-current={sort === value ? 'true' : undefined}
                 className={cn(
-                  'rounded-md px-3 py-1',
-                  sort === value ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
+                  'rounded-full px-5 py-1.5 transition',
+                  sort === value ? 'bg-white font-semibold text-foreground shadow-[0_1px_4px_rgba(0,0,0,0.12)]' : 'text-muted-foreground hover:text-foreground'
                 )}
               >
                 {label}
               </Link>
             ))}
           </nav>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-[14px] text-muted-foreground">
             {filtered ? '검색 결과 ' : '전체 '}
-            <span className="font-medium text-foreground">{(count ?? 0).toLocaleString('ko-KR')}</span>편
+            <span className="font-semibold text-foreground tabular-nums">{(count ?? 0).toLocaleString('ko-KR')}</span>편
           </p>
         </div>
 
         {popularTags.length > 0 && (
-          <ul className="flex flex-wrap gap-1.5" aria-label="분야 태그 필터">
+          <ul className="mt-5 flex flex-wrap gap-2" aria-label="분야 태그 필터">
             {popularTags.map((t) => {
               const active = t === tag;
               return (
@@ -114,43 +126,41 @@ export default async function PapersPage({ searchParams }: { searchParams: Promi
                     href={paperListHref({ ...params, tag: active ? null : t, page: 1 })}
                     aria-current={active ? 'true' : undefined}
                     className={cn(
-                      'inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-medium transition',
-                      active
-                        ? 'border-primary bg-primary text-primary-foreground'
-                        : 'bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground'
+                      'inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-[14px] transition',
+                      active ? 'bg-foreground text-white' : 'bg-surface text-ink-2 hover:bg-[#e8e8ed] hover:text-foreground'
                     )}
                   >
                     #{t}
-                    {active && <X className="size-3" aria-label="필터 해제" />}
+                    {active && <X className="size-3.5" aria-label="필터 해제" />}
                   </Link>
                 </li>
               );
             })}
           </ul>
         )}
-      </div>
 
-      <div className="mt-8">
-        {!papers || papers.length === 0 ? (
-          filtered ? (
-            <EmptyState title="검색 결과가 없어요" message="다른 검색어나 태그로 찾아보세요." actionLabel="전체 논문 보기" actionHref="/papers" />
+        <div className="mt-10">
+          {!papers || papers.length === 0 ? (
+            filtered ? (
+              <EmptyState title="검색 결과가 없어요" message="다른 검색어나 태그로 찾아보세요." actionLabel="전체 논문 보기" actionHref="/papers" />
+            ) : (
+              <EmptyState
+                title="아직 등록된 논문이 없어요"
+                message="첫 번째 연구를 공유해 보세요."
+                actionLabel="첫 논문 업로드하기"
+                actionHref="/papers/upload"
+              />
+            )
           ) : (
-            <EmptyState
-              title="아직 등록된 논문이 없어요"
-              message="첫 번째 연구를 공유해 보세요."
-              actionLabel="첫 논문 업로드하기"
-              actionHref="/papers/upload"
-            />
-          )
-        ) : (
-          <div className="grid gap-4 sm:grid-cols-2">
-            {(papers as PaperCardData[]).map((p) => (
-              <PaperCard key={p.concept_id} paper={p} />
-            ))}
-          </div>
-        )}
-        <Pagination page={page} total={pages} hrefFor={(n) => paperListHref({ ...params, page: n })} />
-      </div>
-    </div>
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {(papers as PaperCardData[]).map((p) => (
+                <PaperCard key={p.concept_id} paper={p} />
+              ))}
+            </div>
+          )}
+          <Pagination page={page} total={pages} hrefFor={(n) => paperListHref({ ...params, page: n })} />
+        </div>
+      </Container>
+    </>
   );
 }

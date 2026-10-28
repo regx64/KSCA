@@ -3,47 +3,61 @@
 import { useState } from 'react';
 import { Check, Copy } from 'lucide-react';
 import { toast } from 'sonner';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
 import { formatAPA, formatBibTeX, type CitationInput } from '@/lib/citation';
+import { cn } from '@/lib/utils';
 
 // README §3.2: APA and BibTeX, auto-generated, one-click copy.
+// Segmented control like Apple's product selectors.
 export function CitationBlock({ paper, baseUrl }: { paper: CitationInput; baseUrl: string }) {
-  const [copied, setCopied] = useState<'apa' | 'bibtex' | null>(null);
+  const [kind, setKind] = useState<'apa' | 'bibtex'>('apa');
+  const [copied, setCopied] = useState(false);
   const formats = { apa: formatAPA(paper, baseUrl), bibtex: formatBibTeX(paper, baseUrl) };
 
-  async function copy(kind: 'apa' | 'bibtex') {
+  async function copy() {
     try {
       await navigator.clipboard.writeText(formats[kind]);
-      setCopied(kind);
+      setCopied(true);
       toast.success(`${kind === 'apa' ? 'APA' : 'BibTeX'} 인용을 복사했습니다.`);
-      setTimeout(() => setCopied(null), 1500);
+      setTimeout(() => setCopied(false), 1500);
     } catch {
       toast.error('복사하지 못했습니다. 직접 선택해서 복사해주세요.');
     }
   }
 
   return (
-    <Tabs defaultValue="apa" className="gap-3">
-      <TabsList>
-        <TabsTrigger value="apa">APA</TabsTrigger>
-        <TabsTrigger value="bibtex">BibTeX</TabsTrigger>
-      </TabsList>
-      {(['apa', 'bibtex'] as const).map((kind) => (
-        <TabsContent key={kind} value={kind}>
-          <div className="relative rounded-lg border bg-muted/50 p-4 pr-24">
-            {kind === 'apa' ? (
-              <p className="text-sm leading-6 break-words">{formats.apa}</p>
-            ) : (
-              <pre className="overflow-x-auto font-mono text-xs leading-5 whitespace-pre">{formats.bibtex}</pre>
+    <div>
+      <div role="tablist" aria-label="인용 형식" className="inline-flex rounded-full bg-surface p-1">
+        {(['apa', 'bibtex'] as const).map((k) => (
+          <button
+            key={k}
+            type="button"
+            role="tab"
+            aria-selected={kind === k}
+            onClick={() => setKind(k)}
+            className={cn(
+              'rounded-full px-5 py-1.5 text-[14px] transition',
+              kind === k ? 'bg-white font-semibold text-foreground shadow-[0_1px_4px_rgba(0,0,0,0.12)]' : 'text-muted-foreground hover:text-foreground'
             )}
-            <Button size="sm" variant="outline" className="absolute top-3 right-3" onClick={() => copy(kind)}>
-              {copied === kind ? <Check aria-hidden /> : <Copy aria-hidden />}
-              {copied === kind ? '복사됨' : '복사'}
-            </Button>
-          </div>
-        </TabsContent>
-      ))}
-    </Tabs>
+          >
+            {k === 'apa' ? 'APA' : 'BibTeX'}
+          </button>
+        ))}
+      </div>
+      <div role="tabpanel" className="relative mt-4 rounded-[18px] bg-surface p-6 pr-28">
+        {kind === 'apa' ? (
+          <p className="text-[15px] leading-[1.6] break-words">{formats.apa}</p>
+        ) : (
+          <pre className="overflow-x-auto font-mono text-[13px] leading-[1.6] whitespace-pre">{formats.bibtex}</pre>
+        )}
+        <button
+          type="button"
+          onClick={copy}
+          className="absolute top-5 right-5 inline-flex h-8 items-center gap-1.5 rounded-full bg-white px-3.5 text-[13px] text-link shadow-[0_1px_4px_rgba(0,0,0,0.1)] transition hover:shadow-[0_2px_10px_rgba(0,0,0,0.14)]"
+        >
+          {copied ? <Check className="size-3.5" aria-hidden /> : <Copy className="size-3.5" aria-hidden />}
+          {copied ? '복사됨' : '복사'}
+        </button>
+      </div>
+    </div>
   );
 }

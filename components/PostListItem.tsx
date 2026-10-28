@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { MessageSquare } from 'lucide-react';
+import { MessageCircle } from 'lucide-react';
 import { formatDate } from '@/lib/format';
 import { StatusBadge } from '@/components/StatusBadge';
 import { CATEGORY_LABELS } from '@/lib/board';
@@ -18,37 +18,32 @@ export type PostListData = {
 
 export function PostListItem({ post, showCategory = false }: { post: PostListData; showCategory?: boolean }) {
   return (
-    <li className="group relative px-4 py-3.5 hover:bg-muted/50">
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            {showCategory && (
-              <span className="rounded bg-secondary px-1.5 py-0.5 text-[0.7rem] font-medium text-secondary-foreground">
-                {CATEGORY_LABELS[post.category]}
-              </span>
-            )}
-            <Link href={`/board/post/${post.id}`} className="font-medium after:absolute after:inset-0 group-hover:text-primary">
-              {post.title}
-            </Link>
-            <StatusBadge status={post.status} />
-          </div>
-          <p className="mt-1 flex flex-wrap gap-x-2 text-xs text-muted-foreground">
-            <span>{post.author}</span>
-            <span aria-hidden>·</span>
-            <time dateTime={post.created_at}>{formatDate(post.created_at)}</time>
-            {post.tags.slice(0, 3).map((t) => (
-              <span key={t} className="text-primary/80">
-                #{t}
-              </span>
-            ))}
-          </p>
+    <li className="group relative flex items-center justify-between gap-6 py-5">
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center gap-2">
+          {showCategory && <span className="text-[12px] font-semibold text-link">{CATEGORY_LABELS[post.category]}</span>}
+          <Link
+            href={`/board/post/${post.id}`}
+            className="text-[17px] font-semibold tracking-[-0.015em] after:absolute after:inset-0 group-hover:text-link"
+          >
+            {post.title}
+          </Link>
+          <StatusBadge status={post.status} />
         </div>
-        <span className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground" title="댓글 수">
-          <MessageSquare className="size-3.5" aria-hidden />
-          <span className="sr-only">댓글</span>
-          {post.commentCount}
-        </span>
+        <p className="mt-1 flex flex-wrap gap-x-2 text-[13px] text-muted-foreground">
+          <span>{post.author}</span>
+          <span aria-hidden>·</span>
+          <time dateTime={post.created_at}>{formatDate(post.created_at)}</time>
+          {post.tags.slice(0, 3).map((t) => (
+            <span key={t}>#{t}</span>
+          ))}
+        </p>
       </div>
+      <span className="flex shrink-0 items-center gap-1 text-[13px] text-muted-foreground tabular-nums" title="댓글 수">
+        <MessageCircle className="size-4" strokeWidth={1.75} aria-hidden />
+        <span className="sr-only">댓글</span>
+        {post.commentCount}
+      </span>
     </li>
   );
 }

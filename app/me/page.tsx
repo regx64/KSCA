@@ -9,7 +9,9 @@ import { CATEGORY_LABELS } from '@/lib/board';
 import { TARGET_LABELS } from '@/lib/moderation';
 import { REPORT_REASONS, isValidReportReason } from '@/lib/validation';
 import { resolveTargets, targetKey } from '@/lib/targets';
-import { PageHeader } from '@/components/PageHeader';
+import { Container } from '@/components/Container';
+import { buttonVariants } from '@/components/ui/button';
+import { signOut } from '@/lib/actions/auth';
 import { ProfileForm } from '@/components/AuthForms';
 import { StatusBadge } from '@/components/StatusBadge';
 import { EmptyState } from '@/components/EmptyState';
@@ -55,127 +57,134 @@ export default async function MePage() {
   const targets = await resolveTargets(supabase, reportList);
 
   return (
-    <div className="space-y-10">
-      <PageHeader
-        eyebrow={viewer.user.email}
-        title={`${viewer.profile.nickname}님의 페이지`}
-        description={viewer.profile.role === 'admin' ? '운영진 계정입니다.' : undefined}
-      />
-
-      <section aria-labelledby="profile-heading" className="rounded-xl border bg-card p-5">
-        <h2 id="profile-heading" className="mb-4 text-lg font-bold">
-          프로필
-        </h2>
-        <ProfileForm nickname={viewer.profile.nickname} school={viewer.profile.school} />
-      </section>
-
-      <section aria-labelledby="my-papers-heading">
-        <div className="mb-3 flex items-center justify-between">
-          <h2 id="my-papers-heading" className="text-lg font-bold">
-            내 논문 <span className="text-muted-foreground">{papers.size}</span>
-          </h2>
-          <Link href="/papers/upload" className="text-sm font-medium text-primary hover:underline">
-            새 논문 업로드
-          </Link>
+    <Container>
+      <div className="flex flex-col gap-6 pt-14 pb-12 sm:flex-row sm:items-end sm:justify-between sm:pt-20">
+        <div>
+          <p className="eyebrow text-muted-foreground">
+            {viewer.user.email}
+            {viewer.profile.role === 'admin' && <span className="ml-2 rounded-full bg-foreground px-2 py-0.5 text-[11px] text-white">운영진</span>}
+          </p>
+          <h1 className="headline-lg mt-3">안녕하세요, {viewer.profile.nickname}님.</h1>
         </div>
-        {papers.size === 0 ? (
-          <EmptyState message="업로드한 논문이 없습니다." actionLabel="첫 논문 업로드하기" actionHref="/papers/upload" />
-        ) : (
-          <ul className="divide-y rounded-xl border bg-card">
-            {[...papers.values()].map((p) => (
-              <li key={p.concept_id} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3 text-sm">
-                <Link href={`/papers/${p.concept_id}`} className="font-medium hover:text-primary">
-                  {p.title}
-                </Link>
-                <StatusBadge status={p.status} />
-                <span className="font-mono text-xs text-muted-foreground">
-                  {p.concept_id} · v{p.version_no}
-                  {p.versions > 1 ? ` (${p.versions}개 버전)` : ''}
-                </span>
-                <span className="ml-auto flex items-center gap-3 text-xs text-muted-foreground">
-                  <span>조회 {p.view_count.toLocaleString('ko-KR')}</span>
-                  <Link href={`/papers/${p.concept_id}/upload-version`} className="text-primary hover:underline">
-                    새 버전
-                  </Link>
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+        <form action={signOut}>
+          <button type="submit" className={buttonVariants({ variant: 'secondary' })}>
+            로그아웃
+          </button>
+        </form>
+      </div>
 
-      <section aria-labelledby="my-posts-heading">
-        <h2 id="my-posts-heading" className="mb-3 text-lg font-bold">
-          내 글 <span className="text-muted-foreground">{posts?.length ?? 0}</span>
-        </h2>
-        {!posts || posts.length === 0 ? (
-          <EmptyState message="작성한 글이 없습니다." actionLabel="글쓰기" actionHref="/board/write" />
-        ) : (
-          <ul className="divide-y rounded-xl border bg-card">
-            {posts.map((p) => (
-              <li key={p.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3 text-sm">
-                <span className="rounded bg-secondary px-1.5 py-0.5 text-[0.7rem] text-secondary-foreground">
-                  {CATEGORY_LABELS[p.category as BoardCategory]}
-                </span>
-                <Link href={`/board/post/${p.id}`} className="font-medium hover:text-primary">
-                  {p.title}
-                </Link>
-                <StatusBadge status={p.status as ContentStatus} />
-                <time dateTime={p.created_at} className="ml-auto text-xs text-muted-foreground">
-                  {formatDate(p.created_at)}
-                </time>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+      <div className="space-y-16">
+        <section aria-labelledby="profile-heading" className="rounded-[28px] bg-surface p-7 sm:p-10">
+          <h2 id="profile-heading" className="headline-md mb-6">
+            프로필.
+          </h2>
+          <ProfileForm nickname={viewer.profile.nickname} school={viewer.profile.school} />
+        </section>
 
-      <section aria-labelledby="my-reports-heading">
-        <h2 id="my-reports-heading" className="text-lg font-bold">
-          내 신고 내역 <span className="text-muted-foreground">{reportList.length}</span>
-        </h2>
-        <p className="mt-0.5 mb-3 text-xs text-muted-foreground">신고 대상과 처리 여부만 표시됩니다.</p>
-        {reportList.length === 0 ? (
-          <EmptyState message="신고 내역이 없습니다." />
-        ) : (
-          <ul className="divide-y rounded-xl border bg-card">
-            {reportList.map((r) => {
-              const target = targets.get(targetKey(r));
-              return (
-                <li key={r.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3 text-sm">
-                  <span className="rounded bg-muted px-1.5 py-0.5 text-[0.7rem] text-muted-foreground">
-                    {TARGET_LABELS[r.target_type]}
-                  </span>
-                  {target ? (
-                    <Link href={target.href} className="hover:text-primary">
-                      {target.title}
+        <section aria-labelledby="my-papers-heading">
+          <div className="mb-6 flex items-end justify-between gap-4">
+            <h2 id="my-papers-heading" className="headline-md">
+              내 논문 <span className="text-muted-foreground">{papers.size}</span>
+            </h2>
+            <Link href="/papers/upload" className="link-chevron text-[15px]">
+              새 논문 업로드
+            </Link>
+          </div>
+          {papers.size === 0 ? (
+            <EmptyState message="업로드한 논문이 없습니다." actionLabel="첫 논문 업로드하기" actionHref="/papers/upload" />
+          ) : (
+            <ul className="divide-y divide-border border-y border-border">
+              {[...papers.values()].map((p) => (
+                <li key={p.concept_id} className="flex flex-wrap items-center gap-x-4 gap-y-1 py-5">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[12px] font-semibold text-muted-foreground">
+                      <span className="font-mono tracking-normal">{p.concept_id}</span> · v{p.version_no}
+                      {p.versions > 1 ? ` · ${p.versions}개 버전` : ''}
+                    </p>
+                    <Link href={`/papers/${p.concept_id}`} className="mt-1 inline-flex items-center gap-2 text-[17px] font-semibold tracking-[-0.015em] hover:text-link">
+                      {p.title}
+                      <StatusBadge status={p.status} />
                     </Link>
-                  ) : (
-                    <span className="text-muted-foreground">비공개 처리된 콘텐츠</span>
-                  )}
-                  <span className="text-xs text-muted-foreground">
-                    {isValidReportReason(r.reason) ? REPORT_REASONS[r.reason] : r.reason}
-                  </span>
-                  <span className="ml-auto flex items-center gap-3 text-xs">
-                    <span
-                      className={
-                        r.status === 'pending'
-                          ? 'rounded-full bg-accent px-2 py-0.5 text-accent-foreground'
-                          : 'rounded-full bg-secondary px-2 py-0.5 text-secondary-foreground'
-                      }
-                    >
-                      {r.status === 'pending' ? '검토 대기' : '검토 완료'}
-                    </span>
-                    <time dateTime={r.created_at} className="text-muted-foreground">
-                      {formatDate(r.created_at)}
-                    </time>
+                  </div>
+                  <span className="flex items-center gap-5 text-[13px] text-muted-foreground">
+                    <span className="tabular-nums">조회 {p.view_count.toLocaleString('ko-KR')}</span>
+                    <Link href={`/papers/${p.concept_id}/upload-version`} className="link-chevron">
+                      새 버전
+                    </Link>
                   </span>
                 </li>
-              );
-            })}
-          </ul>
-        )}
-      </section>
-    </div>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        <section aria-labelledby="my-posts-heading">
+          <h2 id="my-posts-heading" className="headline-md mb-6">
+            내 글 <span className="text-muted-foreground">{posts?.length ?? 0}</span>
+          </h2>
+          {!posts || posts.length === 0 ? (
+            <EmptyState message="작성한 글이 없습니다." actionLabel="글쓰기" actionHref="/board/write" />
+          ) : (
+            <ul className="divide-y divide-border border-y border-border">
+              {posts.map((p) => (
+                <li key={p.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-4">
+                  <span className="text-[12px] font-semibold text-link">{CATEGORY_LABELS[p.category as BoardCategory]}</span>
+                  <Link href={`/board/post/${p.id}`} className="text-[16px] font-semibold hover:text-link">
+                    {p.title}
+                  </Link>
+                  <StatusBadge status={p.status as ContentStatus} />
+                  <time dateTime={p.created_at} className="ml-auto text-[13px] text-muted-foreground">
+                    {formatDate(p.created_at)}
+                  </time>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        <section aria-labelledby="my-reports-heading">
+          <h2 id="my-reports-heading" className="headline-md">
+            내 신고 내역 <span className="text-muted-foreground">{reportList.length}</span>
+          </h2>
+          <p className="mt-2 mb-6 text-[14px] text-muted-foreground">신고 대상과 처리 여부만 표시됩니다.</p>
+          {reportList.length === 0 ? (
+            <EmptyState message="신고 내역이 없습니다." />
+          ) : (
+            <ul className="divide-y divide-border border-y border-border">
+              {reportList.map((r) => {
+                const target = targets.get(targetKey(r));
+                return (
+                  <li key={r.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-4 text-[15px]">
+                    <span className="text-[12px] font-semibold text-muted-foreground">{TARGET_LABELS[r.target_type]}</span>
+                    {target ? (
+                      <Link href={target.href} className="font-semibold hover:text-link">
+                        {target.title}
+                      </Link>
+                    ) : (
+                      <span className="text-muted-foreground">비공개 처리된 콘텐츠</span>
+                    )}
+                    <span className="text-[13px] text-muted-foreground">{isValidReportReason(r.reason) ? REPORT_REASONS[r.reason] : r.reason}</span>
+                    <span className="ml-auto flex items-center gap-3 text-[12px]">
+                      <span
+                        className={
+                          r.status === 'pending'
+                            ? 'rounded-full bg-[#fff4e5] px-2.5 py-0.5 font-semibold text-[#b25000]'
+                            : 'rounded-full bg-[#e8f8ee] px-2.5 py-0.5 font-semibold text-[#1a7f37]'
+                        }
+                      >
+                        {r.status === 'pending' ? '검토 대기' : '검토 완료'}
+                      </span>
+                      <time dateTime={r.created_at} className="text-muted-foreground">
+                        {formatDate(r.created_at)}
+                      </time>
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
+      </div>
+    </Container>
   );
 }

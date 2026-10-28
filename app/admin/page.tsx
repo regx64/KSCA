@@ -1,11 +1,12 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { ArrowRight, Flag, Megaphone } from 'lucide-react';
+import { Flag, Megaphone } from 'lucide-react';
 import { requireAdminPage } from '@/lib/guards';
 import { TABLE_BY_TARGET, TARGET_LABELS } from '@/lib/moderation';
 import { resolveTargets, targetKey } from '@/lib/targets';
 import { formatDate } from '@/lib/format';
 import { PageHeader } from '@/components/PageHeader';
+import { Container } from '@/components/Container';
 import { AdminModerationButtons } from '@/components/AdminModerationButtons';
 import { EmptyState } from '@/components/EmptyState';
 import { buttonVariants } from '@/components/ui/button';
@@ -47,87 +48,80 @@ export default async function AdminHomePage() {
   const hidden = hiddenRows.flat().sort((a, b) => b.created_at.localeCompare(a.created_at));
   const targets = await resolveTargets(supabase, hidden);
 
-  return (
-    <div className="space-y-10">
-      <PageHeader eyebrow="ADMIN" title="운영진 대시보드" description="신고 검토, 비공개 콘텐츠 관리, 공지 작성을 할 수 있습니다." />
+  const total = hiddenCounts.reduce((a, b) => a + b, 0);
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Link href="/admin/reports" className="group rounded-xl border bg-card p-5 transition hover:border-primary/40 hover:shadow-sm">
-          <div className="flex items-center justify-between">
-            <Flag className="size-5 text-destructive" aria-hidden />
-            <ArrowRight className="size-4 text-muted-foreground transition group-hover:translate-x-0.5" aria-hidden />
-          </div>
-          <p className="mt-3 font-semibold">신고 검토 큐</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            검토 대기 <strong className="text-foreground">{pendingTargets.size}</strong>건 (신고 {(pendingReports.data ?? []).length}개)
-          </p>
+  return (
+    <Container>
+      <PageHeader eyebrow="운영진" title="대시보드." description="신고 검토, 비공개 콘텐츠 관리, 공지 작성을 할 수 있습니다." />
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Link href="/admin/reports" className="group rounded-[28px] bg-[#1d1d1f] p-8 text-white transition hover:bg-black">
+          <Flag className="size-6 text-[#ff9f0a]" aria-hidden />
+          <p className="mt-6 text-[15px] text-[#a1a1a6]">신고 검토 큐</p>
+          <p className="mt-1 text-[48px] leading-none font-bold tracking-[-0.03em] tabular-nums">{pendingTargets.size}</p>
+          <p className="mt-3 text-[14px] text-[#a1a1a6]">검토 대기 · 신고 {(pendingReports.data ?? []).length}개</p>
+          <span className="link-chevron mt-6 text-[15px] !text-[#2997ff]">검토하러 가기</span>
         </Link>
-        <Link
-          href="/board/write?category=notice"
-          className="group rounded-xl border bg-card p-5 transition hover:border-primary/40 hover:shadow-sm"
-        >
-          <div className="flex items-center justify-between">
-            <Megaphone className="size-5 text-primary" aria-hidden />
-            <ArrowRight className="size-4 text-muted-foreground transition group-hover:translate-x-0.5" aria-hidden />
-          </div>
-          <p className="mt-3 font-semibold">공지 작성</p>
-          <p className="mt-1 text-sm text-muted-foreground">공지 카테고리는 운영진만 작성할 수 있습니다.</p>
+        <Link href="/board/write?category=notice" className="group rounded-[28px] bg-surface p-8 transition hover:bg-[#ececf0]">
+          <Megaphone className="size-6 text-primary" aria-hidden />
+          <p className="mt-6 text-[15px] text-muted-foreground">공지 작성</p>
+          <p className="mt-1 text-[28px] leading-tight font-bold tracking-[-0.02em]">학회 소식을 전하세요.</p>
+          <p className="mt-3 text-[14px] text-muted-foreground">공지 카테고리는 운영진만 작성할 수 있습니다.</p>
+          <span className="link-chevron mt-6 text-[15px]">공지 쓰기</span>
         </Link>
       </div>
 
-      <section aria-labelledby="stats-heading">
-        <h2 id="stats-heading" className="mb-3 text-lg font-bold">
-          현황
+      <section aria-labelledby="stats-heading" className="mt-16">
+        <h2 id="stats-heading" className="headline-md mb-6">
+          현황.
         </h2>
-        <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-[22px] bg-border sm:grid-cols-4">
           {[
             ['회원', users],
             ['논문', papers],
             ['게시글', posts],
-            ['비공개 콘텐츠', hiddenCounts.reduce((a, b) => a + b, 0)],
+            ['비공개 콘텐츠', total],
           ].map(([label, value]) => (
-            <div key={label} className="rounded-xl border bg-card p-4">
-              <dt className="text-xs text-muted-foreground">{label}</dt>
-              <dd className="mt-1 font-heading text-2xl font-bold">{Number(value).toLocaleString('ko-KR')}</dd>
+            <div key={label} className="bg-surface px-6 py-7">
+              <dt className="text-[13px] text-muted-foreground">{label}</dt>
+              <dd className="mt-1 text-[34px] font-bold tracking-[-0.03em] tabular-nums">{Number(value).toLocaleString('ko-KR')}</dd>
             </div>
           ))}
         </dl>
-        <p className="mt-2 text-xs text-muted-foreground">
+        <p className="mt-3 text-[13px] text-muted-foreground">
           비공개 내역: {TARGETS.map((t, i) => `${TARGET_LABELS[t]} ${hiddenCounts[i]}`).join(' · ')}
         </p>
       </section>
 
-      <section aria-labelledby="hidden-heading">
-        <h2 id="hidden-heading" className="text-lg font-bold">
-          최근 비공개 콘텐츠
+      <section aria-labelledby="hidden-heading" className="mt-16">
+        <h2 id="hidden-heading" className="headline-md">
+          비공개 콘텐츠.
         </h2>
-        <p className="mt-0.5 mb-3 text-xs text-muted-foreground">
+        <p className="mt-2 mb-6 text-[14px] text-muted-foreground">
           신고 누적 또는 운영진 조치로 비공개된 콘텐츠입니다. 검토 대기 중인 항목은 신고 검토 큐에서 처리하세요.
         </p>
         {hidden.length === 0 ? (
           <EmptyState message="비공개 콘텐츠가 없습니다." />
         ) : (
-          <ul className="divide-y rounded-xl border bg-card">
+          <ul className="divide-y divide-border border-y border-border">
             {hidden.map((h) => {
               const t = targets.get(targetKey(h));
               const pending = pendingTargets.has(targetKey(h));
               return (
-                <li key={targetKey(h)} className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3 text-sm">
-                  <span className="rounded bg-muted px-1.5 py-0.5 text-[0.7rem] text-muted-foreground">
-                    {TARGET_LABELS[h.target_type]}
-                  </span>
+                <li key={targetKey(h)} className="flex flex-wrap items-center gap-x-3 gap-y-2 py-4 text-[15px]">
+                  <span className="text-[12px] font-semibold text-muted-foreground">{TARGET_LABELS[h.target_type]}</span>
                   {t ? (
-                    <Link href={t.href} className="min-w-0 truncate font-medium hover:text-primary">
+                    <Link href={t.href} className="min-w-0 truncate font-semibold hover:text-link">
                       {t.title}
                     </Link>
                   ) : (
                     <span className="text-muted-foreground">(삭제된 대상)</span>
                   )}
-                  {t && <span className="text-xs text-muted-foreground">{t.authorNickname}</span>}
-                  <span className="text-xs text-muted-foreground">{formatDate(h.created_at)}</span>
+                  {t && <span className="text-[13px] text-muted-foreground">{t.authorNickname}</span>}
+                  <span className="text-[13px] text-muted-foreground">{formatDate(h.created_at)}</span>
                   <span className="ml-auto flex items-center gap-2">
                     {pending ? (
-                      <Link href="/admin/reports" className={buttonVariants({ variant: 'outline', size: 'xs' })}>
+                      <Link href="/admin/reports" className={buttonVariants({ variant: 'secondary', size: 'xs' })}>
                         검토 대기 중
                       </Link>
                     ) : (
@@ -140,6 +134,6 @@ export default async function AdminHomePage() {
           </ul>
         )}
       </section>
-    </div>
+    </Container>
   );
 }

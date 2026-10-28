@@ -460,7 +460,7 @@ npm run build
 /app                    — 페이지 (App Router). 라우팅 구조는 §5 참고
   /api/papers/[id]/download — signed URL 발급 후 리다이렉트 (§7)
   /auth/confirm         — 가입 확인 메일 링크 처리 (§2 이메일 인증)
-/components             — 재사용 UI. ui/ 하위는 shadcn 생성물이므로 직접 고치지 말고 감싸서 쓴다
+/components             — 재사용 UI. ui/ 하위는 shadcn 생성물 (button.tsx만 Apple 스타일 pill 버튼으로 재정의). 나머지는 직접 고치지 말고 감싸서 쓴다
 /lib
   /supabase             — client(브라우저) / server(쿠키 기반) / admin(secret key, Storage 전용) / proxy(세션 갱신)
   /actions              — Server Action ('use server'). 모든 쓰기는 여기를 거친다
@@ -484,6 +484,7 @@ proxy.ts                — 요청마다 Supabase 세션 쿠키 갱신 (접근 �
 - 테이블 읽기/쓰기는 항상 사용자 세션 클라이언트(`lib/supabase/server.ts`)로 해서 RLS가 적용되게 한다. secret key 클라이언트(`lib/supabase/admin.ts`)는 Storage signed URL 발급에만 쓴다.
 - 앱 레벨 체크(`canView`, `canPostToCategory` 등)는 UX용이고, 보안은 RLS·트리거가 담당한다는 전제로 작성한다.
 - 날짜는 `lib/format.ts`로 KST 기준 표시한다 (서버는 UTC로 동작).
+- **디자인 시스템 (apple.com 레퍼런스)**: 흰색/`#f5f5f7`(`bg-surface`) 면, `#1d1d1f` 본문, `#0071e3` 액션 블루, pill 버튼, 마침표로 끝나는 큰 제목(`headline-hero`/`-xl`/`-lg`/`-md`, `subhead`, `eyebrow` — `app/globals.css`). 폼 입력은 `.field`/`.field-label`/`.field-hint` 클래스를, 페이지 폭은 `Container`를, 섹션 상단 보조 내비게이션은 `LocalNav`를 쓴다. 폰트는 Pretendard.
 
 ## 18. 기여 워크플로우 (Contribution Workflow)
 

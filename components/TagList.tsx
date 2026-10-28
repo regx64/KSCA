@@ -1,24 +1,15 @@
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 
-// Tags as chips. With `hrefFor`, each chip links to a filtered list.
-export function TagList({
-  tags,
-  hrefFor,
-  className,
-}: {
-  tags: string[];
-  hrefFor?: (tag: string) => string;
-  className?: string;
-}) {
+export function TagList({ tags, hrefFor, className }: { tags: string[]; hrefFor?: (tag: string) => string; className?: string }) {
   if (tags.length === 0) return null;
-  const chip = 'inline-flex items-center rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium text-secondary-foreground';
+  const chip = 'inline-flex items-center rounded-full bg-surface px-3 py-1 text-[13px] text-ink-2';
   return (
-    <ul className={cn('flex flex-wrap gap-1.5', className)} aria-label="태그">
+    <ul className={cn('flex flex-wrap gap-2', className)} aria-label="태그">
       {tags.map((t) => (
         <li key={t}>
           {hrefFor ? (
-            <Link href={hrefFor(t)} className={cn(chip, 'hover:bg-secondary/70')}>
+            <Link href={hrefFor(t)} className={cn(chip, 'transition hover:bg-[#e8e8ed] hover:text-foreground')}>
               #{t}
             </Link>
           ) : (

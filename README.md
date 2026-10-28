@@ -422,7 +422,7 @@ create policy "paper_counters_no_direct_access" on paper_counters for all using 
 npm install
 npx supabase start            # 로컬 Supabase 스택 기동 (최초 1회는 이미지 다운로드로 수 분 소요)
 cp .env.local.example .env.local
-# .env.local에 `npx supabase status`의 ANON_KEY / SERVICE_ROLE_KEY 값을 입력
+# .env.local에 `npx supabase status`의 ANON_KEY / SECRET_KEY 값을 입력
 npm run db:reset              # 마이그레이션 + seed.sql 적용 + 시드 PDF 업로드
 npm run dev
 ```
@@ -462,7 +462,7 @@ npm run build
   /auth/confirm         — 가입 확인 메일 링크 처리 (§2 이메일 인증)
 /components             — 재사용 UI. ui/ 하위는 shadcn 생성물이므로 직접 고치지 말고 감싸서 쓴다
 /lib
-  /supabase             — client(브라우저) / server(쿠키 기반) / admin(service role, Storage 전용) / proxy(세션 갱신)
+  /supabase             — client(브라우저) / server(쿠키 기반) / admin(secret key, Storage 전용) / proxy(세션 갱신)
   /actions              — Server Action ('use server'). 모든 쓰기는 여기를 거친다
   auth.ts, guards.ts    — requireUser / requireAdmin / requireAdminPage (role 기반, 미들웨어 아님 — §5.2)
   validation.ts         — 입력 검증 (DB 제약과 같은 기준)
@@ -481,7 +481,7 @@ proxy.ts                — 요청마다 Supabase 세션 쿠키 갱신 (접근 �
 **컨벤션**
 - 순수 로직(검증, 포맷팅, 권한 판단)은 `lib/`에 부수효과 없는 함수로 두고 Vitest로 테스트한다. `'use server'` 파일은 async 함수만 export할 수 있으므로 검증 함수는 `lib/validation.ts` 등에 둔다.
 - 모든 로그인 필요 페이지는 `getViewer`/`requireAdminPage`로 시작하고, 미로그인 시 `/login?next=...`로 보낸다.
-- 테이블 읽기/쓰기는 항상 사용자 세션 클라이언트(`lib/supabase/server.ts`)로 해서 RLS가 적용되게 한다. service role 클라이언트(`lib/supabase/admin.ts`)는 Storage signed URL 발급에만 쓴다.
+- 테이블 읽기/쓰기는 항상 사용자 세션 클라이언트(`lib/supabase/server.ts`)로 해서 RLS가 적용되게 한다. secret key 클라이언트(`lib/supabase/admin.ts`)는 Storage signed URL 발급에만 쓴다.
 - 앱 레벨 체크(`canView`, `canPostToCategory` 등)는 UX용이고, 보안은 RLS·트리거가 담당한다는 전제로 작성한다.
 - 날짜는 `lib/format.ts`로 KST 기준 표시한다 (서버는 UTC로 동작).
 
@@ -515,7 +515,7 @@ proxy.ts                — 요청마다 Supabase 세션 쿠키 갱신 (접근 �
 1. 저장소를 Vercel에 연결 (Framework Preset: Next.js)
 2. 환경 변수 (`.env.local.example` 참고):
    - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` — 프로덕션 프로젝트 값
-   - `SUPABASE_SERVICE_ROLE_KEY` — **서버 전용**, 절대 `NEXT_PUBLIC_`을 붙이지 않는다
+   - `SUPABASE_SECRET_KEY` — Supabase **Settings → API Keys**의 secret key(`sb_secret_...`). **서버 전용**, 절대 `NEXT_PUBLIC_`을 붙이지 않는다 (레거시 `service_role` JWT 대신 사용)
    - `NEXT_PUBLIC_SITE_URL` — 배포 도메인 (인용 URL과 인증 메일 링크에 쓰인다)
 3. 배포 후 `/signup`으로 가입하고, Supabase Studio(SQL Editor)에서 최초 운영진을 지정한다:
    ```sql

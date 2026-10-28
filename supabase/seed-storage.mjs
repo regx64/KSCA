@@ -3,7 +3,7 @@
 // `papers` bucket, so the signed-download flow works against seed data.
 // Run AFTER `npx supabase db reset` (npm run db:reset does both).
 //
-// Reads NEXT_PUBLIC_SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY from the
+// Reads NEXT_PUBLIC_SUPABASE_URL / SUPABASE_SECRET_KEY from the
 // environment or .env.local; falls back to `npx supabase status`.
 
 import { execSync } from 'node:child_process';
@@ -17,12 +17,12 @@ function loadEnv() {
       if (m && !env[m[1]]) env[m[1]] = m[2];
     }
   }
-  if (!env.NEXT_PUBLIC_SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) {
+  if (!env.NEXT_PUBLIC_SUPABASE_URL || !env.SUPABASE_SECRET_KEY) {
     const status = JSON.parse(execSync('npx supabase status -o json', { encoding: 'utf8' }));
     env.NEXT_PUBLIC_SUPABASE_URL ||= status.API_URL;
-    env.SUPABASE_SERVICE_ROLE_KEY ||= status.SERVICE_ROLE_KEY;
+    env.SUPABASE_SECRET_KEY ||= status.SECRET_KEY;
   }
-  return { url: env.NEXT_PUBLIC_SUPABASE_URL, key: env.SUPABASE_SERVICE_ROLE_KEY };
+  return { url: env.NEXT_PUBLIC_SUPABASE_URL, key: env.SUPABASE_SECRET_KEY };
 }
 
 // Builds a valid single-page PDF (with a correct xref table) showing the

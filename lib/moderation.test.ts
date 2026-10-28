@@ -11,12 +11,13 @@ function recordingClient(failOn?: string) {
       update: (values: Record<string, unknown>) => {
         const call: Call = { table, values, filters: [] };
         calls.push(call);
-        const builder: any = {
+        type Result = { error: { code: string } | null };
+        const builder = {
           eq: (col: string, val: string) => {
             call.filters.push([col, val]);
             return builder;
           },
-          then: (resolve: any) => resolve({ error: table === failOn ? { code: '42501' } : null }),
+          then: (resolve: (r: Result) => unknown) => resolve({ error: table === failOn ? { code: '42501' } : null }),
         };
         return builder;
       },

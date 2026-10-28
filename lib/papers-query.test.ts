@@ -40,3 +40,14 @@ describe('escapeLike', () => {
     expect(escapeLike('100%_a\\b')).toBe('100\\%\\_a\\\\b');
   });
 });
+
+import { ilikeAnyFilter } from './papers-query';
+
+describe('ilikeAnyFilter', () => {
+  it('builds a quoted or() filter across columns', () => {
+    expect(ilikeAnyFilter(['title', 'authors'], '강화학습')).toBe('title.ilike."%강화학습%",authors.ilike."%강화학습%"');
+  });
+  it('neutralizes commas, quotes, parentheses and wildcards', () => {
+    expect(ilikeAnyFilter(['title'], 'a,b)"c%')).toBe('title.ilike."%a,b)\\"c\\\\%%"');
+  });
+});

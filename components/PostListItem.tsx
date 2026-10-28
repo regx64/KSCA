@@ -1,0 +1,83 @@
+import Link from 'next/link';
+import { MessageSquare } from 'lucide-react';
+import { formatDate } from '@/lib/format';
+import { StatusBadge } from '@/components/StatusBadge';
+import { CATEGORY_LABELS } from '@/lib/board';
+import type { BoardCategory, ContentStatus } from '@/lib/types';
+
+export type PostListData = {
+  id: string;
+  title: string;
+  category: BoardCategory;
+  tags: string[];
+  status: ContentStatus;
+  created_at: string;
+  author: string;
+  commentCount: number;
+};
+
+export function PostListItem({ post, showCategory = false }: { post: PostListData; showCategory?: boolean }) {
+  return (
+    <li className="group relative px-4 py-3.5 hover:bg-muted/50">
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            {showCategory && (
+              <span className="rounded bg-secondary px-1.5 py-0.5 text-[0.7rem] font-medium text-secondary-foreground">
+                {CATEGORY_LABELS[post.category]}
+              </span>
+            )}
+            <Link href={`/board/post/${post.id}`} className="font-medium after:absolute after:inset-0 group-hover:text-primary">
+              {post.title}
+            </Link>
+            <StatusBadge status={post.status} />
+          </div>
+          <p className="mt-1 flex flex-wrap gap-x-2 text-xs text-muted-foreground">
+            <span>{post.author}</span>
+            <span aria-hidden>·</span>
+            <time dateTime={post.created_at}>{formatDate(post.created_at)}</time>
+            {post.tags.slice(0, 3).map((t) => (
+              <span key={t} className="text-primary/80">
+                #{t}
+              </span>
+            ))}
+          </p>
+        </div>
+        <span className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground" title="댓글 수">
+          <MessageSquare className="size-3.5" aria-hidden />
+          <span className="sr-only">댓글</span>
+          {post.commentCount}
+        </span>
+      </div>
+    </li>
+  );
+}
+
+type PostRow = {
+  id: string;
+  title: string;
+  category: BoardCategory;
+  tags: string[];
+  status: ContentStatus;
+  created_at: string;
+  profiles: { nickname: string } | { nickname: string }[] | null;
+  comments: { count: number }[] | null;
+};
+
+export const POST_LIST_SELECT = 'id, title, category, tags, status, created_at, profiles(nickname), comments(count)';
+
+export function toPostListData(rows: PostRow[]): PostListData[] {
+  return rows.map((r) => {
+    const profile = Array.isArray(r.profiles) ? r.profiles[0] : r.profiles;
+    return {
+      id: r.id,
+      title: r.title,
+      category: r.category,
+      tags: r.tags,
+      status: r.status,
+      created_at: r.created_at,
+      author: profile?.nickname ?? '알 수 없음',
+      commentCount: r.comments?.[0]?.count ?? 0,
+    };
+  });
+}

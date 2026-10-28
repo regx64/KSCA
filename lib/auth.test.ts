@@ -7,7 +7,7 @@ function stub(user: { id: string; email?: string } | null, profile: Record<strin
     from: () => ({
       select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: profile, error: null }) }) }),
     }),
-  } as any;
+  } as unknown as Parameters<typeof requireAdmin>[0];
 }
 
 describe('requireUser', () => {

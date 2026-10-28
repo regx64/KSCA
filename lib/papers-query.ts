@@ -30,3 +30,12 @@ export function paperListHref(params: Partial<PaperListParams>): string {
 export function escapeLike(s: string): string {
   return s.replace(/[\\%_]/g, (c) => `\\${c}`);
 }
+
+// PostgREST `or` filter matching `q` (case-insensitive substring) in any of
+// `columns`. The value is double-quoted so commas/parentheses in user input
+// can't break out of the filter syntax.
+export function ilikeAnyFilter(columns: string[], q: string): string {
+  const pattern = `%${escapeLike(q)}%`;
+  const quoted = `"${pattern.replace(/[\\"]/g, (c) => `\\${c}`)}"`;
+  return columns.map((c) => `${c}.ilike.${quoted}`).join(',');
+}

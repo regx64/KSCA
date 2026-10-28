@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { ArrowRight, Fingerprint, GitBranch, ShieldCheck } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import { buttonVariants } from '@/components/ui/button';
@@ -26,7 +27,16 @@ const FEATURES = [
   },
 ];
 
-export default async function LandingPage() {
+export default async function LandingPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  // Supabase Auth falls back to the Site URL (this page) when an email link
+  // fails, e.g. ?error=access_denied&error_code=otp_expired.
+  const sp = await searchParams;
+  if (sp.error_code || sp.error) redirect('/login?error=confirm');
+
   const supabase = await createClient();
   const [{ data: highlights }, { count: paperCount }, { count: postCount }, { data: notices }] = await Promise.all([
     supabase

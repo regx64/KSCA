@@ -2,12 +2,15 @@ import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { safeNextPath } from '@/lib/paths';
-import { LoginForm } from '@/components/AuthForms';
+import { LoginForm, ResendConfirmationForm } from '@/components/AuthForms';
 
 export const metadata: Metadata = { title: '로그인' };
 
 const ERRORS: Record<string, string> = {
-  confirm: '이메일 확인 링크가 만료되었거나 올바르지 않습니다. 다시 로그인해 확인 메일을 요청해주세요.',
+  // Confirmation links are single-use; mail scanners (e.g. Gmail) often open
+  // them first, so the account may already be verified when the user clicks.
+  confirm:
+    '이메일 확인 링크가 만료되었거나 이미 사용되었습니다. 메일 보안 검사가 링크를 먼저 열었다면 인증은 이미 끝났을 수 있으니, 먼저 로그인해 보세요. 로그인이 안 되면 아래에서 확인 메일을 다시 받으세요.',
 };
 
 export default async function LoginPage({
@@ -32,9 +35,12 @@ export default async function LoginPage({
         </p>
       )}
       {sp.error && ERRORS[sp.error] && (
-        <p role="alert" className="mb-4 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
-          {ERRORS[sp.error]}
-        </p>
+        <div className="mb-4 space-y-3">
+          <p role="alert" className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
+            {ERRORS[sp.error]}
+          </p>
+          {sp.error === 'confirm' && <ResendConfirmationForm email={sp.email} />}
+        </div>
       )}
       <LoginForm next={next} email={sp.email} />
     </div>

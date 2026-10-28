@@ -77,6 +77,13 @@ export async function PaperDetail({ conceptId, version }: { conceptId: string; v
               {paper.school && <> · {paper.school}</>} · {formatDate(paper.created_at)}
             </p>
             <TagList className="mt-4" tags={paper.tags} hrefFor={(t) => `/papers?tag=${encodeURIComponent(t)}`} />
+            <a
+              href={`/api/papers/${paper.id}/download`}
+              className={buttonVariants({ variant: 'outline', size: 'sm', className: 'mt-4 lg:hidden' })}
+            >
+              <Download aria-hidden />
+              PDF 다운로드
+            </a>
           </header>
 
           <section aria-labelledby="abstract-heading">

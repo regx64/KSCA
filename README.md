@@ -406,3 +406,140 @@ create policy "paper_counters_no_direct_access" on paper_counters for all using 
 1. Next.js 프로젝트 초기 세팅 + Supabase 클라이언트 연결
 2. 페이지별 UI 와이어프레임
 3. 업로드 플로우 실제 구현 (Signed URL 발급 서버 액션부터)
+
+---
+
+## 16. 로컬 개발 환경 설정 (Local Dev Setup)
+
+### 사전 요구사항
+- Node.js 20 이상, npm
+- Docker (Supabase CLI가 로컬 Postgres/Auth/Storage/Mailpit을 컨테이너로 실행)
+- Supabase CLI는 devDependency로 포함되어 있어 `npx supabase`로 바로 쓸 수 있다
+
+### 최초 설정
+
+```bash
+npm install
+npx supabase start            # 로컬 Supabase 스택 기동 (최초 1회는 이미지 다운로드로 수 분 소요)
+cp .env.local.example .env.local
+# .env.local에 `npx supabase status`의 ANON_KEY / SERVICE_ROLE_KEY 값을 입력
+npm run db:reset              # 마이그레이션 + seed.sql 적용 + 시드 PDF 업로드
+npm run dev
+```
+
+- 앱: `http://localhost:3000`
+- Supabase Studio(테이블/Auth 사용자 확인): `http://127.0.0.1:54323`
+- Mailpit(로컬 메일함 — 회원가입 확인 메일이 여기로 온다): `http://127.0.0.1:54324`
+
+`papers` 스토리지 버킷(private, PDF 전용, 20MB 제한)은 마이그레이션이 만들어 주므로 따로 만들 필요가 없다.
+
+### 시드 계정 (로컬 전용, 비밀번호는 모두 `password123`)
+| 이메일 | 역할 | 시드 데이터 |
+|---|---|---|
+| `admin@ksca.dev` | 운영진 | 공지 글 |
+| `author1@ksca.dev` | 일반회원 (김민준) | v1→v2 다중 버전 논문, 스터디 모집 글 |
+| `author2@ksca.dev` | 일반회원 (이서연) | 논문 2편, 질문 글 |
+| `author3@ksca.dev` | 일반회원 (박지호) | 논문 1편, 신고 3건으로 자동 숨김된 스팸 글 (`/admin/reports`에서 확인) |
+
+### 테스트
+
+```bash
+npm test          # 단위 테스트 (Vitest): 검증·인용·권한·신고 처리 로직
+npm run test:db   # DB 레벨 검증: RLS 정책, 신고 3건 자동 숨김 트리거 (실제 anon/authenticated 역할로 실행, 끝나면 롤백)
+npm run lint
+npm run typecheck
+npm run build
+```
+
+### 스키마를 바꿀 때
+새 마이그레이션 파일만 추가한다 (`npx supabase migration new <name>`). 기존 마이그레이션 파일은 이미 적용된 것으로 간주하고 수정하지 않는다. `npm run db:reset`으로 전체 재적용 후 `npm run test:db`로 확인한다.
+
+## 17. 프로젝트 구조 및 컨벤션 (Project Structure & Conventions)
+
+```
+/app                    — 페이지 (App Router). 라우팅 구조는 §5 참고
+  /api/papers/[id]/download — signed URL 발급 후 리다이렉트 (§7)
+  /auth/confirm         — 가입 확인 메일 링크 처리 (§2 이메일 인증)
+/components             — 재사용 UI. ui/ 하위는 shadcn 생성물이므로 직접 고치지 말고 감싸서 쓴다
+/lib
+  /supabase             — client(브라우저) / server(쿠키 기반) / admin(service role, Storage 전용) / proxy(세션 갱신)
+  /actions              — Server Action ('use server'). 모든 쓰기는 여기를 거친다
+  auth.ts, guards.ts    — requireUser / requireAdmin / requireAdminPage (role 기반, 미들웨어 아님 — §5.2)
+  validation.ts         — 입력 검증 (DB 제약과 같은 기준)
+  citation.ts           — APA / BibTeX 생성
+  moderation.ts         — 신고 묶음 처리, 삭제 확정/복구 디스패치
+  visibility.ts         — canView (RLS 미러링, 화면 표시 판단용 — 실제 보안 경계는 RLS)
+  types.ts              — DB 로우 타입
+/supabase
+  /migrations           — 순서대로 적용되는 SQL. 기존 파일은 불변, 변경은 새 마이그레이션으로
+  /tests                — psql로 실행하는 DB 검증 스크립트 (npm run test:db)
+  /templates            — Auth 메일 템플릿
+  seed.sql, seed-storage.mjs — 로컬 개발용 샘플 데이터
+proxy.ts                — 요청마다 Supabase 세션 쿠키 갱신 (접근 제어 아님)
+```
+
+**컨벤션**
+- 순수 로직(검증, 포맷팅, 권한 판단)은 `lib/`에 부수효과 없는 함수로 두고 Vitest로 테스트한다. `'use server'` 파일은 async 함수만 export할 수 있으므로 검증 함수는 `lib/validation.ts` 등에 둔다.
+- 모든 로그인 필요 페이지는 `getViewer`/`requireAdminPage`로 시작하고, 미로그인 시 `/login?next=...`로 보낸다.
+- 테이블 읽기/쓰기는 항상 사용자 세션 클라이언트(`lib/supabase/server.ts`)로 해서 RLS가 적용되게 한다. service role 클라이언트(`lib/supabase/admin.ts`)는 Storage signed URL 발급에만 쓴다.
+- 앱 레벨 체크(`canView`, `canPostToCategory` 등)는 UX용이고, 보안은 RLS·트리거가 담당한다는 전제로 작성한다.
+- 날짜는 `lib/format.ts`로 KST 기준 표시한다 (서버는 UTC로 동작).
+
+## 18. 기여 워크플로우 (Contribution Workflow)
+
+- **브랜치**: `main`에서 직접 작업하지 않는다. `feature/<짧은-설명>` 또는 `fix/<짧은-설명>` 브랜치를 만든다.
+- **커밋 메시지**: 명령형 현재 시제 한 줄 요약 (`Add paper detail page`, `Fix RLS policy for hidden comments`).
+- **PR 전 체크리스트** (CI가 같은 항목을 자동 실행한다 — `.github/workflows/ci.yml`):
+  1. `npm run lint`, `npm run typecheck`, `npm test` 통과
+  2. `npm run build` 통과
+  3. 스키마·RLS를 건드렸다면 `npm run test:db` 통과
+  4. 새 라우트를 추가했다면 비회원/일반회원/운영진 3가지 권한으로 직접 확인
+- **PR 설명**: 무엇을, 왜 바꿨는지 + 확인한 방법(테스트 커맨드 또는 수동 확인 절차).
+- **리뷰**: 최소 1인 승인 후 병합. RLS 정책이나 마이그레이션을 건드리는 PR은 리뷰어가 §8·§12 및 §20과의 정합성을 직접 확인한다.
+
+## 19. 배포 가이드 (Deployment Guide)
+
+### Supabase 프로덕션 프로젝트
+1. [supabase.com](https://supabase.com)에서 새 프로젝트 생성
+2. 마이그레이션 적용 (`papers` 버킷도 함께 생성된다):
+   ```bash
+   npx supabase link --project-ref <project-ref>
+   npx supabase db push
+   ```
+   `seed.sql`은 로컬 전용이므로 프로덕션에 넣지 않는다.
+3. **Authentication → Sign In / Providers → Email**에서 "Confirm email"을 켠다 (§2 이메일 인증 필수).
+4. **Authentication → URL Configuration**에서 Site URL을 배포 도메인으로, Redirect URLs에 `https://<도메인>/**`을 추가한다.
+5. **Authentication → Emails → Confirm signup** 템플릿을 `supabase/templates/confirmation.html` 내용으로 바꾼다 (링크가 `/auth/confirm`으로 가도록). 실제 메일 발송용 SMTP도 설정한다.
+
+### Vercel
+1. 저장소를 Vercel에 연결 (Framework Preset: Next.js)
+2. 환경 변수 (`.env.local.example` 참고):
+   - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` — 프로덕션 프로젝트 값
+   - `SUPABASE_SERVICE_ROLE_KEY` — **서버 전용**, 절대 `NEXT_PUBLIC_`을 붙이지 않는다
+   - `NEXT_PUBLIC_SITE_URL` — 배포 도메인 (인용 URL과 인증 메일 링크에 쓰인다)
+3. 배포 후 `/signup`으로 가입하고, Supabase Studio(SQL Editor)에서 최초 운영진을 지정한다:
+   ```sql
+   update profiles set role = 'admin' where id = (select id from auth.users where email = '<운영진 이메일>');
+   ```
+   (일반 사용자는 트리거 때문에 자신의 role을 바꿀 수 없다 — §20 참고)
+
+## 20. 구현 노트: README SQL 대비 추가된 사항
+
+§8–§12의 SQL은 `supabase/migrations/20260905000001`–`000005`에 **그대로** 들어가 있다. 구현 중 그 SQL만으로는 명세의 의도가 실제로 지켜지지 않는 부분이 발견되어, 기존 정책을 바꾸지 않고 덧붙이는 마이그레이션으로 보완했다 (`000002`, `000003`, `000006`). 각 항목은 `npm run test:db`로 검증된다.
+
+| 항목 | 문제 | 보완 |
+|---|---|---|
+| 신고 3건 자동 숨김 (§10) | 트리거가 신고자 권한으로 실행되어, RLS 때문에 신고 수를 1건으로만 세고 남의 콘텐츠를 숨길 수도 없음 → **앱에서 신고해도 절대 숨겨지지 않음** | 같은 함수를 `security definer`로 재정의 |
+| 중복 신고 | 한 사람이 같은 대상을 3번 신고해 혼자 숨길 수 있음 | 대기 중 신고는 (신고자, 대상)당 1건 (부분 unique index) |
+| 권한 상승 | `profiles_update_own`이 컬럼 제한이 없어 스스로 `role = 'admin'` 설정 가능 | 운영진이 아니면 `role` 변경 불가 (트리거) |
+| 숨김 해제 | 작성자가 자기 글의 `status`를 `public`으로 되돌릴 수 있음 / 일반글을 `notice`로 옮길 수 있음 / `view_count` 조작 가능 | 운영진이 아니면 `status`·`category`·`view_count` 등 변경 불가 (트리거) |
+| 버전 탈취 | 남의 `concept_id`로 새 버전을 올리거나, 발급되지 않은 `concept_id`를 지어낼 수 있음 | 원저자만 새 버전 가능, `version_no`는 DB가 부여, 최초 버전의 `concept_id`는 실제 발급된 것만 허용 |
+| 댓글 숨김/복구 (§11) | `comments`·`paper_comments`에 UPDATE 정책이 없어 운영진의 복구 불가 | 운영진 전용 UPDATE 정책 추가 |
+| 조회수 (§3.3) | 비회원은 `papers`를 UPDATE할 수 없어 조회수가 오르지 않음 | `increment_paper_view()` 함수(security definer)로만 증가 |
+| 버전 배지 (§3.4) | `written_at_version`을 클라이언트가 임의로 보낼 수 있음 | 댓글이 달린 논문 행에서 DB가 채움 |
+| 저자명 (§3.1) | 업로드 필드에 있으나 §8 스키마에 컬럼 없음 | `papers.authors` 추가 |
+| 게시글 태그 (§4) | 명세에 있으나 §8 스키마에 컬럼 없음 | `posts.tags` 추가 |
+| 프로필 생성 | 명세에 없음 | `auth.users` INSERT 트리거로 `profiles` 자동 생성 (가입 시 닉네임/학교 반영) |
+| 파일 제한 (§3.1) | 앱 검증만으로는 우회 가능 | `papers` 버킷 자체에 PDF 전용·20MB 제한 |
+
+§14 미결정 사항 관련: `/me`의 신고 내역은 **대상과 처리 여부(검토 대기/검토 완료)만** 노출한다. 인용 URL과 메일 링크의 도메인은 `NEXT_PUBLIC_SITE_URL`로 바꿀 수 있어, 정식 도메인이 정해지면 코드 수정 없이 반영된다.

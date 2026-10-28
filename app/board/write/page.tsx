@@ -5,6 +5,8 @@ import { getViewer } from '@/lib/auth';
 import { isValidCategory, writableCategories } from '@/lib/board';
 import { loginHref } from '@/lib/paths';
 import { PageHeader } from '@/components/PageHeader';
+import { Container } from '@/components/Container';
+import { BoardNav } from '@/components/BoardNav';
 import { PostForm } from '@/components/PostForm';
 
 export const metadata: Metadata = { title: '글쓰기' };
@@ -20,9 +22,12 @@ export default async function BoardWritePage({ searchParams }: { searchParams: P
   const initial = category && isValidCategory(category) && categories.includes(category) ? category : 'free';
 
   return (
-    <div className="mx-auto max-w-3xl">
-      <PageHeader eyebrow="COMMUNITY" title="글쓰기" />
-      <PostForm categories={categories} initialCategory={initial} />
-    </div>
+    <>
+      <BoardNav />
+      <Container size="narrow">
+        <PageHeader align="center" eyebrow="커뮤니티" title="새 글 쓰기." description="질문, 모집, 연구 이야기 — 무엇이든 좋아요." />
+        <PostForm categories={categories} initialCategory={initial} />
+      </Container>
+    </>
   );
 }

@@ -9,7 +9,6 @@ import { submitReport } from '@/lib/actions/reports';
 import { REPORT_REASONS, type ReportReason } from '@/lib/validation';
 import { loginHref } from '@/lib/paths';
 import { Button, buttonVariants } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import {
   Dialog,
@@ -42,7 +41,7 @@ export function ReportButton({
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
-  const trigger = buttonVariants({ variant: 'ghost', size: 'xs', className: 'text-muted-foreground' });
+  const trigger = buttonVariants({ variant: 'ghost', size: 'xs', className: 'text-muted-foreground hover:text-foreground' });
 
   if (!loggedIn) {
     return (
@@ -74,9 +73,9 @@ export function ReportButton({
         <Flag aria-hidden />
         {label}
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="gap-5 rounded-[24px] p-7 sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>신고하기</DialogTitle>
+          <DialogTitle className="text-[21px] font-bold tracking-[-0.02em]">신고하기</DialogTitle>
           <DialogDescription>
             신고가 3건 누적되면 자동으로 비공개 처리되고, 운영진이 검토합니다.
           </DialogDescription>
@@ -84,7 +83,7 @@ export function ReportButton({
         <fieldset className="space-y-2">
           <legend className="mb-1 text-sm font-medium">신고 사유</legend>
           {(Object.entries(REPORT_REASONS) as [ReportReason, string][]).map(([value, text]) => (
-            <label key={value} className="flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm has-checked:border-primary has-checked:bg-primary/5">
+            <label key={value} className="flex cursor-pointer items-center gap-2.5 rounded-xl border border-hairline px-4 py-3 text-[15px] transition has-checked:border-primary has-checked:bg-[#e8f1fc]">
               <input
                 type="radio"
                 name="reason"
@@ -99,13 +98,14 @@ export function ReportButton({
         </fieldset>
         <div className="space-y-1.5">
           <Label htmlFor={`report-detail-${targetId}`}>상세 내용 {reason === 'other' ? '(필수)' : '(선택)'}</Label>
-          <Textarea
+          <textarea
             id={`report-detail-${targetId}`}
             value={detail}
             onChange={(e) => setDetail(e.target.value)}
             maxLength={1000}
             rows={3}
             placeholder="운영진이 판단하는 데 도움이 되는 내용을 적어주세요."
+            className="field text-[15px]"
           />
         </div>
         {error && (
@@ -113,8 +113,8 @@ export function ReportButton({
             {error}
           </p>
         )}
-        <DialogFooter>
-          <Button variant="destructive" onClick={onSubmit} disabled={pending}>
+        <DialogFooter className="mx-0 mb-0 border-0 bg-transparent p-0">
+          <Button variant="destructive" onClick={onSubmit} disabled={pending} className="w-full sm:w-auto">
             {pending ? '제출 중…' : '신고 제출'}
           </Button>
         </DialogFooter>

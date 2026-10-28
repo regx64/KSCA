@@ -50,11 +50,11 @@ export function AdminModerationButtons({
   }
 
   return status === 'public' ? (
-    <Button variant="ghost" size="xs" className="text-destructive" disabled={pending} onClick={() => run('confirm')}>
+    <Button variant="ghost" size="xs" className="text-destructive hover:bg-[#fde8e8]" disabled={pending} onClick={() => run('confirm')}>
       운영진: 숨기기
     </Button>
   ) : (
-    <Button variant="ghost" size="xs" className="text-primary" disabled={pending} onClick={() => run('restore')}>
+    <Button variant="ghost" size="xs" className="text-link hover:bg-[#e8f1fc]" disabled={pending} onClick={() => run('restore')}>
       운영진: 공개 복구
     </Button>
   );

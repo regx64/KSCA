@@ -1,5 +1,210 @@
-<h2>KSCA 이메일 확인</h2>
-<p>KSCA(전국 청소년 컴퓨터 사이언스 학회)에 가입해 주셔서 감사합니다.</p>
-<p>아래 링크를 눌러 이메일 주소를 확인하면 가입이 완료됩니다.</p>
-<p><a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email&next=/me">이메일 확인하기</a></p>
-<p>본인이 가입하지 않았다면 이 메일을 무시하세요.</p>
+<!DOCTYPE html>
+<html lang="ko" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="x-apple-disable-message-reformatting">
+  <meta name="color-scheme" content="light">
+  <meta name="supported-color-schemes" content="light">
+  <title>KSCA 이메일 확인</title>
+  <!--
+    KSCA signup confirmation email (Supabase Auth "Confirm signup" template).
+    Email-client safe: table layout + inline styles only (Gmail strips <style>
+    in many cases, Outlook ignores most modern CSS). Colors follow the site
+    theme in app/globals.css.
+
+    Supabase template variables used:
+      {{ .SiteURL }}       — Site URL from Auth settings
+      {{ .TokenHash }}     — one-time token, verified by /auth/confirm
+      {{ .Email }}         — the address being confirmed
+      {{ .Data.nickname }} — nickname from signUp() metadata
+  -->
+  <style>
+    @media (max-width: 600px) {
+      .container { width: 100% !important; }
+      .px { padding-left: 24px !important; padding-right: 24px !important; }
+      .hero-title { font-size: 26px !important; line-height: 36px !important; }
+      .feature-cell { display: block !important; width: 100% !important; padding: 0 0 12px 0 !important; }
+    }
+  </style>
+</head>
+<body style="margin:0; padding:0; background-color:#fcfaf6; -webkit-text-size-adjust:100%;">
+  <!-- Preheader (inbox preview text) -->
+  <div style="display:none; max-height:0; overflow:hidden; mso-hide:all; font-size:1px; line-height:1px; color:#fcfaf6; opacity:0;">
+    버튼 한 번이면 끝! 이메일을 확인하고 KSCA에서 첫 연구를 공유해 보세요.&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;
+  </div>
+
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#fcfaf6;">
+    <tr>
+      <td align="center" style="padding:40px 12px;">
+
+        <table role="presentation" class="container" width="560" cellpadding="0" cellspacing="0" border="0" style="width:560px; max-width:560px;">
+
+          <!-- Brand row -->
+          <tr>
+            <td style="padding:0 4px 20px 4px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td width="36" height="36" align="center" valign="middle" bgcolor="#2847a1" style="width:36px; height:36px; background-color:#2847a1; border-radius:9px; font-family:Georgia,'Noto Serif KR',serif; font-size:18px; font-weight:700; color:#ffffff; line-height:36px;">K</td>
+                  <td style="padding-left:10px; font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR',sans-serif;">
+                    <div style="font-size:16px; font-weight:800; letter-spacing:0.5px; color:#171c2a; line-height:18px;">KSCA</div>
+                    <div style="font-size:11px; color:#5e6370; line-height:16px;">전국 청소년 컴퓨터 사이언스 학회</div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Card -->
+          <tr>
+            <td style="background-color:#ffffff; border:1px solid #e3dfd8; border-radius:20px; overflow:hidden;">
+
+              <!-- Hero -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td class="px" bgcolor="#171c2a" style="background-color:#171c2a; background-image:linear-gradient(135deg,#171c2a 0%,#22306b 60%,#2847a1 100%); border-radius:19px 19px 0 0; padding:44px 44px 40px 44px; font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR',sans-serif;">
+                    <div style="display:inline-block; background-color:#f0be67; color:#171c2a; font-size:11px; font-weight:800; letter-spacing:1.5px; padding:5px 10px; border-radius:999px;">WELCOME ABOARD</div>
+                    <h1 class="hero-title" style="margin:18px 0 0 0; font-family:Georgia,'Noto Serif KR','Apple SD Gothic Neo',serif; font-size:30px; line-height:40px; font-weight:700; color:#ffffff;">
+                      {{ with .Data.nickname }}{{ . }}님, {{ end }}당신의 연구가<br>기록될 준비가 됐어요
+                    </h1>
+                    <p style="margin:14px 0 0 0; font-size:15px; line-height:24px; color:#c9cfe6;">
+                      마지막 한 단계만 남았습니다. 아래 버튼을 눌러<br>이메일 주소를 확인해 주세요.
+                    </p>
+                  </td>
+                </tr>
+                <!-- Marigold accent line -->
+                <tr>
+                  <td height="4" bgcolor="#f0be67" style="height:4px; line-height:4px; font-size:0; background-color:#f0be67;">&nbsp;</td>
+                </tr>
+              </table>
+
+              <!-- Body -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td class="px" style="padding:36px 44px 8px 44px; font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR',sans-serif;">
+
+                    <!-- Bulletproof CTA button -->
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                      <tr>
+                        <td align="center">
+                          <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                            <tr>
+                              <td align="center" bgcolor="#2847a1" style="border-radius:12px; background-color:#2847a1; box-shadow:0 6px 16px rgba(40,71,161,0.28);">
+                                <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email&next=/me" target="_blank"
+                                   style="display:inline-block; padding:16px 40px; font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR',sans-serif; font-size:16px; font-weight:700; color:#ffffff; text-decoration:none; border-radius:12px;">
+                                  이메일 확인하고 시작하기 &rarr;
+                                </a>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <p style="margin:18px 0 0 0; text-align:center; font-size:12px; line-height:18px; color:#5e6370;">
+                      <strong style="color:#171c2a;">{{ .Email }}</strong> 주소로 가입 요청이 들어왔어요.<br>
+                      링크는 <strong style="color:#171c2a;">1시간 동안, 한 번만</strong> 사용할 수 있습니다.
+                    </p>
+
+                    <!-- Divider -->
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:32px 0 24px 0;">
+                      <tr><td height="1" bgcolor="#e3dfd8" style="height:1px; line-height:1px; font-size:0; background-color:#e3dfd8;">&nbsp;</td></tr>
+                    </table>
+
+                    <p style="margin:0 0 14px 0; font-size:12px; font-weight:800; letter-spacing:1.5px; color:#2847a1;">KSCA에서 할 수 있는 것</p>
+
+                    <!-- Feature cards -->
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td class="feature-cell" width="33%" valign="top" style="padding:0 6px 0 0;">
+                          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                            <tr>
+                              <td bgcolor="#eaeefb" style="background-color:#eaeefb; border-radius:12px; padding:16px 14px;">
+                                <div style="font-size:20px; line-height:22px;">📄</div>
+                                <div style="margin-top:8px; font-size:13px; font-weight:700; color:#171c2a;">영구 식별자</div>
+                                <div style="margin-top:4px; font-size:12px; line-height:18px; color:#5e6370;">올리는 순간 KSCA-연도-번호가 발급돼요</div>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                        <td class="feature-cell" width="33%" valign="top" style="padding:0 3px;">
+                          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                            <tr>
+                              <td bgcolor="#eaeefb" style="background-color:#eaeefb; border-radius:12px; padding:16px 14px;">
+                                <div style="font-size:20px; line-height:22px;">🔁</div>
+                                <div style="margin-top:8px; font-size:13px; font-weight:700; color:#171c2a;">버전 관리</div>
+                                <div style="margin-top:4px; font-size:12px; line-height:18px; color:#5e6370;">고쳐 올려도 식별자와 댓글은 그대로</div>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                        <td class="feature-cell" width="33%" valign="top" style="padding:0 0 0 6px;">
+                          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                            <tr>
+                              <td bgcolor="#eaeefb" style="background-color:#eaeefb; border-radius:12px; padding:16px 14px;">
+                                <div style="font-size:20px; line-height:22px;">💬</div>
+                                <div style="margin-top:8px; font-size:13px; font-weight:700; color:#171c2a;">커뮤니티</div>
+                                <div style="margin-top:4px; font-size:12px; line-height:18px; color:#5e6370;">질문하고, 스터디원도 찾아보세요</div>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <!-- Fallback link -->
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:28px;">
+                      <tr>
+                        <td bgcolor="#fcfaf6" style="background-color:#fcfaf6; border:1px dashed #e3dfd8; border-radius:12px; padding:14px 16px;">
+                          <p style="margin:0; font-size:12px; line-height:18px; color:#5e6370;">버튼이 눌리지 않나요? 아래 주소를 브라우저에 붙여넣으세요.</p>
+                          <p style="margin:6px 0 0 0; font-size:11px; line-height:16px; word-break:break-all;">
+                            <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email&next=/me" target="_blank" style="color:#2847a1; text-decoration:underline;">{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&amp;type=email&amp;next=/me</a>
+                          </p>
+                        </td>
+                      </tr>
+                    </table>
+
+                  </td>
+                </tr>
+
+                <!-- Security note -->
+                <tr>
+                  <td class="px" style="padding:20px 44px 36px 44px; font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR',sans-serif;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td bgcolor="#fee5b3" style="background-color:#fee5b3; border-radius:12px; padding:12px 16px; font-size:12px; line-height:18px; color:#5b3106;">
+                          🔒 직접 가입하지 않았다면 이 메일을 무시하세요. 링크를 누르지 않으면 계정은 활성화되지 않습니다.
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td align="center" style="padding:24px 12px 0 12px; font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR',sans-serif;">
+              <p style="margin:0; font-size:12px; line-height:18px; color:#5e6370;">
+                <a href="{{ .SiteURL }}/papers" target="_blank" style="color:#5e6370; text-decoration:none;">논문 아카이브</a>
+                &nbsp;·&nbsp;
+                <a href="{{ .SiteURL }}/board" target="_blank" style="color:#5e6370; text-decoration:none;">게시판</a>
+                &nbsp;·&nbsp;
+                <a href="{{ .SiteURL }}/board/notice" target="_blank" style="color:#5e6370; text-decoration:none;">공지</a>
+              </p>
+              <p style="margin:8px 0 0 0; font-size:11px; line-height:16px; color:#9a9ea8;">
+                KSCA — Korea Student Computer science Association<br>
+                이 메일은 발신 전용입니다.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

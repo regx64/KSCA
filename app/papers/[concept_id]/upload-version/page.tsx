@@ -6,6 +6,7 @@ import { getViewer } from '@/lib/auth';
 import { getPaperVersions } from '@/lib/papers';
 import { loginHref } from '@/lib/paths';
 import { PageHeader } from '@/components/PageHeader';
+import { Container } from '@/components/Container';
 import { PaperUploadForm } from '@/components/PaperUploadForm';
 
 export const metadata: Metadata = { title: '새 버전 업로드' };
@@ -23,13 +24,14 @@ export default async function UploadVersionPage({ params }: { params: Promise<{ 
   if (latest.author_id !== viewer.user.id) redirect(`/papers/${concept_id}`);
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <Container size="narrow">
       <PageHeader
+        align="center"
         eyebrow={`${latest.concept_id} · 현재 v${latest.version_no}`}
-        title="새 버전 업로드"
+        title={`v${latest.version_no + 1} 업로드.`}
         description={
           <>
-            <Link href={`/papers/${concept_id}`} className="underline underline-offset-4">
+            <Link href={`/papers/${concept_id}`} className="text-link hover:underline">
               {latest.title}
             </Link>
             의 v{latest.version_no + 1}을 등록합니다. 아래 내용은 현재 버전에서 가져왔으니 바뀐 부분만 수정하세요.
@@ -46,6 +48,6 @@ export default async function UploadVersionPage({ params }: { params: Promise<{ 
           school: latest.school ?? '',
         }}
       />
-    </div>
+    </Container>
   );
 }

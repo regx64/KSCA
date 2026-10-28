@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { safeNextPath } from '@/lib/paths';
 import { LoginForm, ResendConfirmationForm } from '@/components/AuthForms';
+import { Container } from '@/components/Container';
 
 export const metadata: Metadata = { title: '로그인' };
 
@@ -25,24 +26,27 @@ export default async function LoginPage({
   if (data.user) redirect(next);
 
   return (
-    <div className="mx-auto max-w-sm py-6">
-      <h1 className="text-2xl font-bold">로그인</h1>
-      <p className="mt-1 mb-6 text-sm text-muted-foreground">KSCA 계정으로 로그인하세요.</p>
+    <Container size="narrow" className="max-w-[460px]">
+      <div className="pt-16 pb-10 text-center sm:pt-24">
+        <p className="eyebrow text-muted-foreground">KSCA</p>
+        <h1 className="headline-lg mt-3">로그인.</h1>
+        <p className="mt-3 text-[17px] text-muted-foreground">student&apos;s academia에 오신 것을 환영합니다.</p>
+      </div>
       {sp.confirm && (
-        <p role="status" className="mb-4 rounded-lg border border-primary/20 bg-secondary p-3 text-sm text-secondary-foreground">
-          {sp.email ? <strong>{sp.email}</strong> : '입력한 이메일'}로 가입 확인 메일을 보냈습니다. 메일의 링크를 눌러 인증을 완료한 뒤
+        <p role="status" className="mb-5 rounded-[18px] bg-[#e8f1fc] p-4 text-[14px] leading-relaxed text-[#00376b]">
+          {sp.email ? <strong>{sp.email}</strong> : '입력한 이메일'}로 가입 확인 메일을 보냈습니다. 메일의 버튼을 눌러 인증을 완료한 뒤
           로그인해주세요.
         </p>
       )}
       {sp.error && ERRORS[sp.error] && (
-        <div className="mb-4 space-y-3">
-          <p role="alert" className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
+        <div className="mb-5 space-y-3">
+          <p role="alert" className="rounded-[18px] bg-[#fde8e8] p-4 text-[14px] leading-relaxed text-[#86000a]">
             {ERRORS[sp.error]}
           </p>
           {sp.error === 'confirm' && <ResendConfirmationForm email={sp.email} />}
         </div>
       )}
       <LoginForm next={next} email={sp.email} />
-    </div>
+    </Container>
   );
 }

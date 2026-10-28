@@ -19,6 +19,8 @@ import { AdminModerationButtons } from '@/components/AdminModerationButtons';
 import { HiddenNotice } from '@/components/HiddenNotice';
 import { LoginPrompt } from '@/components/LoginPrompt';
 import { StatusBadge } from '@/components/StatusBadge';
+import { Container } from '@/components/Container';
+import { BoardNav } from '@/components/BoardNav';
 import type { BoardCategory, ContentStatus } from '@/lib/types';
 
 type Props = { params: Promise<{ id: string }> };
@@ -64,49 +66,52 @@ export default async function PostDetailPage({ params }: Props) {
   const comments = toThreadComments(commentRows ?? []);
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <>
+      <BoardNav active={post.category} />
       {post.status === 'hidden' && <HiddenNotice isAdmin={role === 'admin' && !isAuthor} />}
-      <article>
-        <header className="border-b pb-5">
-          <Link href={`/board/${post.category}`} className="text-xs font-medium text-primary hover:underline">
-            {CATEGORY_LABELS[post.category]}
-          </Link>
-          <h1 className="mt-1.5 text-2xl leading-snug font-bold sm:text-3xl">
-            {post.title} <StatusBadge status={post.status} />
-          </h1>
-          <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
-            <span className="font-medium text-foreground">{post.profiles?.nickname ?? '알 수 없음'}</span>
-            <span aria-hidden>·</span>
-            <time dateTime={post.created_at}>{formatDateTime(post.created_at)}</time>
-            <span className="ml-auto flex items-center gap-1">
-              {role === 'admin' && <AdminModerationButtons targetType="post" targetId={post.id} status={post.status} />}
-              {!isAuthor && <ReportButton targetType="post" targetId={post.id} loggedIn={viewer !== null} />}
-            </span>
+      <Container size="narrow">
+        <article>
+          <header className="pt-14 pb-10 sm:pt-20">
+            <Link href={`/board/${post.category}`} className="eyebrow text-link hover:underline">
+              {CATEGORY_LABELS[post.category]}
+            </Link>
+            <h1 className="headline-lg mt-3">
+              {post.title} <StatusBadge status={post.status} />
+            </h1>
+            <div className="mt-6 flex flex-wrap items-center gap-x-3 gap-y-2 text-[14px] text-muted-foreground">
+              <span className="grid size-9 place-items-center rounded-full bg-gradient-to-br from-[#e8e8ed] to-[#d2d2d7] text-[14px] font-semibold text-ink-2" aria-hidden>
+                {(post.profiles?.nickname ?? '?').slice(0, 1)}
+              </span>
+              <span className="font-semibold text-foreground">{post.profiles?.nickname ?? '알 수 없음'}</span>
+              <time dateTime={post.created_at}>{formatDateTime(post.created_at)}</time>
+              <span className="ml-auto flex items-center gap-1">
+                {role === 'admin' && <AdminModerationButtons targetType="post" targetId={post.id} status={post.status} />}
+                {!isAuthor && <ReportButton targetType="post" targetId={post.id} loggedIn={viewer !== null} />}
+              </span>
+            </div>
+          </header>
+          <div className="border-t border-border pt-10">
+            <Markdown>{post.content}</Markdown>
           </div>
-        </header>
-        <div className="py-6">
-          <Markdown>{post.content}</Markdown>
+          <TagList className="mt-10" tags={post.tags} hrefFor={(t) => `/board/${post.category}?tag=${encodeURIComponent(t)}`} />
+        </article>
+
+        <section aria-labelledby="comments-heading" className="mt-16 border-t border-border pt-14">
+          <h2 id="comments-heading" className="headline-md mb-8">
+            댓글 {comments.length}.
+          </h2>
+          <CommentThread comments={comments} targetType="comment" viewerId={viewerId} viewerRole={role} />
+          <div className="mt-6">
+            {viewer ? <CommentForm action={addBoardComment.bind(null, post.id)} /> : <LoginPrompt next={`/board/post/${post.id}`} action="댓글을 남길" />}
+          </div>
+        </section>
+
+        <div className="mt-14">
+          <Link href={`/board/${post.category}`} className="link-chevron text-[15px]">
+            {CATEGORY_LABELS[post.category]} 목록으로
+          </Link>
         </div>
-        <TagList tags={post.tags} hrefFor={(t) => `/board/${post.category}?tag=${encodeURIComponent(t)}`} />
-      </article>
-
-      <section aria-labelledby="comments-heading" className="mt-10 space-y-4">
-        <h2 id="comments-heading" className="text-lg font-bold">
-          댓글 <span className="text-muted-foreground">{comments.length}</span>
-        </h2>
-        <CommentThread comments={comments} targetType="comment" viewerId={viewerId} viewerRole={role} />
-        {viewer ? (
-          <CommentForm action={addBoardComment.bind(null, post.id)} />
-        ) : (
-          <LoginPrompt next={`/board/post/${post.id}`} action="댓글을 남길" />
-        )}
-      </section>
-
-      <div className="mt-10">
-        <Link href={`/board/${post.category}`} className="text-sm text-muted-foreground hover:text-foreground">
-          ← {CATEGORY_LABELS[post.category]} 목록으로
-        </Link>
-      </div>
-    </div>
+      </Container>
+    </>
   );
 }
